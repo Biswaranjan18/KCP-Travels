@@ -1,14 +1,16 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { AppContext } from "../context/AppContext";
 
 const PersonalDetailsForm = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
-    email: ""
-  });
+  const { formData, setFormData, submitBookingToBackend} = useContext(AppContext);
+  // const [formData, setFormData] = useState({
+  //   name: "",
+  //   phone: "",
+  //   email: ""
+  // }); 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
@@ -42,10 +44,12 @@ const PersonalDetailsForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
+   // submitBookingToBackend();
     if (validateForm()) {
-      setIsSubmitting(true);
+     setIsSubmitting(true);
+      await submitBookingToBackend();
       // Simulate API call
       setTimeout(() => {
         toast.success(

@@ -2,30 +2,16 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import PersonalDetailsForm  from "../components/PersionalDetailsForm";
+import { useContext } from "react";
+import { AppContext } from "../context/AppContext";
+
 
 const BookRide = () => {
-  const [tripType, setTripType] = useState('one-way');
-  const [tripDetails, setTripDetails] = useState({
-    from: '',
-    pickupDate: '',
-    pickupTime: '10:00',
-    timePeriod: 'AM',
-    carType: 'Sedan (4-seater)',
-    to: '',
-    returnDate: '',
-    returnTime: '',
-    returnTimePeriod: 'AM',
-    hours: '4',
-    packageType: 'select'
-  });
-
+  const [tripType, setTripType] = useState('one-way');console.log("tripType2",tripType)
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPersonalDetails, setShowPersonalDetails] = useState(false);
-  const [personalDetails, setPersonalDetails] = useState({
-    name: '',
-    phone: '',
-    email: ''
-  });
+  const [showformData, setShowformData] = useState(false);
+  const { tripDetails, setTripDetails } = useContext(AppContext);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -36,9 +22,10 @@ const BookRide = () => {
   };
 
   const handleTripTypeChange = (type) => {
-    setTripType(type);
+     setTripType(type);
     setTripDetails(prev => ({
       ...prev,
+      tripType: type,
       to: type === 'local' ? '' : prev.to,
       returnDate: type === 'round-trip' ? prev.returnDate : '',
       returnTime: type === 'round-trip' ? prev.returnTime : '',
@@ -50,156 +37,19 @@ const BookRide = () => {
     }));
   };
 
-  const handlePersonalDetailsChange = (e) => {
-    const { name, value } = e.target;
-    setPersonalDetails(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const validatePersonalDetails = () => {
-    const errors = {};
-    if (!personalDetails.name.trim()) errors.name = "Please enter your full name";
-    if (!personalDetails.phone.trim()) errors.phone = "Phone number is required";
-    else if (!/^\d{10}$/.test(personalDetails.phone)) errors.phone = "Please enter a valid 10-digit phone number";
-
-    if (personalDetails.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(personalDetails.email)) {
-      errors.email = "Please enter a valid email address";
-    }
-
-    return errors;
-  };
-
-  const submitBookingToBackend = async () => {
-    try {
-      setIsSubmitting(true);
-      
-      const bookingData = {
-        user: {
-          name: personalDetails.name,
-          phone: personalDetails.phone,
-          email: personalDetails.email || undefined
-        },
-        tripDetails: {
-          tripType,
-          from: tripDetails.from,
-          to: tripDetails.to,
-          pickupDate: tripDetails.pickupDate,
-          pickupTime: tripDetails.pickupTime,
-          timePeriod: tripDetails.timePeriod,
-          carType: tripDetails.carType,
-          returnDate: tripDetails.returnDate,
-          returnTime: tripDetails.returnTime,
-          returnTimePeriod: tripDetails.returnTimePeriod,
-          hours: tripDetails.hours,
-          packageType: tripDetails.packageType
-        }
-      };
-
-      const response = await fetch('http://localhost:8580/api/v1/bookings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(bookingData)
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create booking');
-      }
-
-      const data = await response.json();
-      
-      toast.success(
-        <div className="text-center">
-          <h3 className="font-bold text-lg">Booking Confirmed Successfully!</h3>
-          <p className="text-sm mt-1">Thank you, {personalDetails.name}!</p>
-          <p className="text-sm">Your booking reference: {data.data._id}</p>
-        </div>, 
-        {
-          position: "top-center",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "light",
-        }
-      );
-
-      // Reset form after successful submission
-      setTripDetails({
-        from: '',
-        pickupDate: '',
-        pickupTime: '10:00',
-        timePeriod: 'AM',
-        carType: 'Sedan (4-seater)',
-        to: '',
-        returnDate: '',
-        returnTime: '',
-        returnTimePeriod: 'AM',
-        hours: '4',
-        packageType: 'select'
-      });
-      setPersonalDetails({
-        name: '',
-        phone: '',
-        email: ''
-      });
-      setShowPersonalDetails(false);
-    } catch (error) {
-      toast.error(
-        <div className="text-center">
-          <p className="text-sm">Error creating booking. Please try again.</p>
-          <p className="text-xs mt-1">{error.message}</p>
-        </div>, 
-        {
-          position: "top-center",
-          autoClose: 3000,
-        }
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    console.log("tripType1",tripType)
     setTimeout(() => {
       setIsSubmitting(false);
-      setShowPersonalDetails(true);
+      setShowformData(true);
     }, 1500);
   };
 
-  const handlePersonalSubmit = (e) => {
-    e.preventDefault();
-    const errors = validatePersonalDetails();
-    
-    if (Object.keys(errors).length === 0) {
-      submitBookingToBackend();
-    } else {
-      toast.error(
-        <div className="text-center">
-          <p className="text-sm">Please fix the errors in the form</p>
-          <ul className="text-xs mt-1">
-            {Object.values(errors).map((error, index) => (
-              <li key={index}>{error}</li>
-            ))}
-          </ul>
-        </div>, 
-        {
-          position: "top-center",
-          autoClose: 3000,
-        }
-      );
-    }
-  };
-
-  const closePersonalDetails = () => {
-    setShowPersonalDetails(false);
+  const closeformData = () => {
+    setShowformData(false);
   };
 
   const openWhatsApp = () => {
@@ -258,84 +108,6 @@ const BookRide = () => {
     const hour = i + 1;
     return hour < 10 ? `0${hour}:00` : `${hour}:00`;
   });
-
-  const PersonalDetailsForm = () => {
-    return (
-      <div className="w-full max-w-md mx-auto bg-white p-6 md:p-8 rounded-2xl shadow-lg">
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">Complete Your Booking</h2>
-          <p className="text-gray-500 mt-1">We'll use these details to contact you</p>
-        </div>
-
-        <form onSubmit={handlePersonalSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-              Full Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              id="name"
-              name="name"
-              type="text"
-              placeholder="Enter your Name"
-              value={personalDetails.name}
-              onChange={handlePersonalDetailsChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-              Phone Number <span className="text-red-500">*</span>
-            </label>
-            <input
-              id="phone"
-              name="phone"
-              type="tel"
-              placeholder="Enter Phone Number"
-              value={personalDetails.phone}
-              onChange={handlePersonalDetailsChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email Address
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="Enter Your Email (optional)"
-              value={personalDetails.email}
-              onChange={handlePersonalDetailsChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className={`w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow transition-colors duration-300 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
-          >
-            {isSubmitting ? (
-              <span className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Processing...
-              </span>
-            ) : (
-              "Confirm Booking"
-            )}
-          </button>
-        </form>
-      </div>
-    );
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -638,7 +410,7 @@ const BookRide = () => {
                           required
                         >
                           {durationOptions.map(option => (
-                            <option key={option.value} value={option.value} selected={option.value === '1'}>
+                            <option key={option.value} value={option.value} >
                               {option.label}
                             </option>
                           ))}
@@ -691,7 +463,7 @@ const BookRide = () => {
                             required
                           >
                             {timeOptions.map(time => (
-                              <option key={time} value={time} selected={time === '10:00'}>
+                              <option key={time} value={time} >
                                 {time}
                               </option>
                             ))}
@@ -774,7 +546,7 @@ const BookRide = () => {
                           <div className="flex gap-1">
                             <select 
                               name="returnTimePeriod"
-                              value={tripDetails.returnTimePeriod}
+                              value= {tripDetails.returnTimePeriod}
                               onChange={handleChange}
                               className="border rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             >
@@ -854,7 +626,7 @@ const BookRide = () => {
       </div>
 
       {/* Personal Details Modal */}
-      {showPersonalDetails && (
+      {showformData && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -864,14 +636,14 @@ const BookRide = () => {
             className="relative"
           >
             <button
-              onClick={closePersonalDetails}
+              onClick={closeformData}
               className="absolute -top-10 -right-10 text-white hover:text-gray-200 focus:outline-none"
             >
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/>
               </svg>
             </button>
-            <PersonalDetailsForm />
+            <PersonalDetailsForm  tripDetails={tripDetails}/>
           </motion.div>
         </div>
       )}
